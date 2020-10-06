@@ -178,8 +178,6 @@ public class Skeleton<T>
 
         try {
             serverSocket = new ServerSocket(address != null ? address.getPort() : 9999);
-
-            System.out.println("socket closed? " + serverSocket.isClosed());
             connectionThread = new ConnectionThread(serverSocket);
             connectionThread.start();
         } catch(IOException e ){
@@ -195,7 +193,6 @@ public class Skeleton<T>
         public ConnectionThread(ServerSocket serverSocket) {
 
             this.serverSocket = serverSocket;
-            System.out.println("socket closed? in constructor " + serverSocket.isClosed());
         }
 
         @Override
