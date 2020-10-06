@@ -1,6 +1,9 @@
 package rmi;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.*;
+import java.util.Arrays;
 
 /** RMI skeleton
 
@@ -26,6 +29,36 @@ import java.net.*;
 */
 public class Skeleton<T>
 {
+    private InetSocketAddress address;
+    private ServerSocket serverSocket;
+    private ConnectionThread connectionThread;
+    //private Socket socket;
+
+    private void constructorVerifications(Class<T> c, T server) {
+        if (c == null || server == null) {
+            throw new NullPointerException();
+        }
+
+        if (!c.isInterface()) {
+            throw new Error("Class is not interface");
+        }
+
+        Method[] methods = c.getDeclaredMethods();
+        for(Method method : methods) {
+            Class<?>[] exceptions = method.getExceptionTypes();
+            boolean hasRMIExcept = false;
+            for(Class<?> exception : exceptions) {
+                if(exception.toString().equals("class rmi.RMIException")) {
+                    hasRMIExcept = true;
+                    break;
+                }
+            }
+            if(!hasRMIExcept){
+                throw new Error("Interface is not a remote interface");
+            }
+        }
+    }
+
     /** Creates a <code>Skeleton</code> with no initial server address. The
         address will be determined by the system when <code>start</code> is
         called. Equivalent to using <code>Skeleton(null)</code>.
@@ -47,7 +80,8 @@ public class Skeleton<T>
      */
     public Skeleton(Class<T> c, T server)
     {
-        throw new UnsupportedOperationException("not implemented");
+        constructorVerifications((Class<T>) c, server);
+        address = null;
     }
 
     /** Creates a <code>Skeleton</code> with the given initial server address.
@@ -70,7 +104,8 @@ public class Skeleton<T>
      */
     public Skeleton(Class<T> c, T server, InetSocketAddress address)
     {
-        throw new UnsupportedOperationException("not implemented");
+        constructorVerifications((Class<T>) c, server);
+        this.address = address;
     }
 
     /** Called when the listening thread exits.
@@ -139,9 +174,43 @@ public class Skeleton<T>
                              or when the server has already been started and has
                              not since stopped.
      */
-    public synchronized void start() throws RMIException
-    {
-        throw new UnsupportedOperationException("not implemented");
+    public synchronized void start() throws RMIException {
+
+        try {
+            serverSocket = new ServerSocket(address != null ? address.getPort() : 9999);
+
+            System.out.println("socket closed? " + serverSocket.isClosed());
+            connectionThread = new ConnectionThread(serverSocket);
+            connectionThread.start();
+        } catch(IOException e ){
+            System.out.println("IOException when starting server");
+            e.printStackTrace();
+        }
+    }
+
+    private class ConnectionThread extends Thread {
+
+        ServerSocket serverSocket;
+
+        public ConnectionThread(ServerSocket serverSocket) {
+
+            this.serverSocket = serverSocket;
+            System.out.println("socket closed? in constructor " + serverSocket.isClosed());
+        }
+
+        @Override
+        public void run() {
+            while(!serverSocket.isClosed()){
+                Socket socket;
+                try {
+                    socket = serverSocket.accept();
+                    System.out.println("New connection from " + socket.getRemoteSocketAddress());
+                } catch (IOException e) {
+                    System.out.println("IOException while connecting to socket");
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     /** Stops the skeleton server, if it is already running.
@@ -155,6 +224,13 @@ public class Skeleton<T>
      */
     public synchronized void stop()
     {
-        throw new UnsupportedOperationException("not implemented");
+        if(!serverSocket.isClosed()){
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                System.out.println("IOException while closing the server socket");
+                e.printStackTrace();
+            }
+        }
     }
 }
