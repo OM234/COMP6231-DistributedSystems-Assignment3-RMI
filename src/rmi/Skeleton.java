@@ -145,6 +145,7 @@ public class Skeleton<T>
      */
     protected boolean listen_error(Exception exception)
     {
+        exception.printStackTrace();
         return false;
     }
 
@@ -195,15 +196,12 @@ public class Skeleton<T>
      */
     public synchronized void stop()
     {
-        if(!serverSocket.isClosed()){
-            try {
-                serverSocket.close();
-                stopped(null);
-            } catch (IOException e) {
-                stopped(e);
-                System.out.println("IOException while closing the server socket");
-                e.printStackTrace();
-            }
+        if(listenThread == null) {
+            System.out.println("ListenThread not yet initialized, so not stopped");
+            return;
         }
+
+        listenThread.stopRun();
+        stopped(null);
     }
 }
