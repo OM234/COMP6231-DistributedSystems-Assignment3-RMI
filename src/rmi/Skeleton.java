@@ -3,7 +3,6 @@ package rmi;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.*;
-import java.util.Arrays;
 
 /** RMI skeleton
 
@@ -31,8 +30,7 @@ public class Skeleton<T>
 {
     private InetSocketAddress address;
     private ServerSocket serverSocket;
-    private ConnectionThread connectionThread;
-    //private Socket socket;
+    private ListenThread listenThread;
 
     private void constructorVerifications(Class<T> c, T server) {
         if (c == null || server == null) {
@@ -178,35 +176,11 @@ public class Skeleton<T>
 
         try {
             serverSocket = new ServerSocket(address != null ? address.getPort() : 9999);
-            connectionThread = new ConnectionThread(serverSocket);
-            connectionThread.start();
+            listenThread = new ListenThread(serverSocket);
+            listenThread.start();
         } catch(IOException e ){
             System.out.println("IOException when starting server");
             e.printStackTrace();
-        }
-    }
-
-    private class ConnectionThread extends Thread {
-
-        ServerSocket serverSocket;
-
-        public ConnectionThread(ServerSocket serverSocket) {
-
-            this.serverSocket = serverSocket;
-        }
-
-        @Override
-        public void run() {
-            while(!serverSocket.isClosed()){
-                Socket socket;
-                try {
-                    socket = serverSocket.accept();
-                    System.out.println("New connection from " + socket.getRemoteSocketAddress());
-                } catch (IOException e) {
-                    System.out.println("IOException while connecting to socket");
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -224,7 +198,9 @@ public class Skeleton<T>
         if(!serverSocket.isClosed()){
             try {
                 serverSocket.close();
+                stopped(null);
             } catch (IOException e) {
+                stopped(e);
                 System.out.println("IOException while closing the server socket");
                 e.printStackTrace();
             }
