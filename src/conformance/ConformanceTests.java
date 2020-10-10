@@ -36,7 +36,7 @@ public class ConformanceTests
             new Class[] {conformance.common.PathTest.class,
                          conformance.rmi.SkeletonTest.class,
                          conformance.rmi.StubTest.class,
-                         conformance.rmi.ConnectionTest.class,
+                         /*conformance.rmi.ConnectionTest.class,
                          conformance.rmi.ThreadTest.class,
                          conformance.storage.RegistrationTest.class,
                          conformance.storage.AccessTest.class,
@@ -45,7 +45,7 @@ public class ConformanceTests
                          conformance.naming.RegistrationTest.class,
                          conformance.naming.ListingTest.class,
                          conformance.naming.CreationTest.class,
-                         conformance.naming.StubRetrievalTest.class};
+                         conformance.naming.StubRetrievalTest.class*/};
         Series                      series = new Series(tests);
         SeriesReport                report = series.run(3, System.out);
 

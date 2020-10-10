@@ -1,5 +1,7 @@
 package rmi;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.*;
 
 /** RMI stub factory.
@@ -48,7 +50,68 @@ public abstract class Stub
     public static <T> T create(Class<T> c, Skeleton<T> skeleton)
         throws UnknownHostException
     {
-        throw new UnsupportedOperationException("not implemented");
+        nullPointerCheck(new Object[]{c, skeleton});
+        serverRunningCheck(skeleton);
+        hostConnectionCheck(skeleton);
+        interfaceCheck(c);
+        remoteInterfaceCheck(c);
+        return null; //TODO:return something
+    }
+
+    private static <T> void nullPointerCheck(Object[] toCheck) {
+
+        for(Object object : toCheck) {
+            if(object == null) {
+                throw new NullPointerException("null arguments");
+            }
+        }
+    }
+
+    private static <T> void serverRunningCheck(Skeleton<T> skeleton) {
+
+        if(!skeleton.isServerRunning()) {
+            throw new IllegalStateException("Server is not running");
+        }
+    }
+
+    private static <T> void hostConnectionCheck(Skeleton<T> skeleton) throws UnknownHostException {
+
+        InetSocketAddress address = skeleton.getInetSocketAddress();
+        try(Socket socket = new Socket(address.getHostName(), address.getPort())) {
+
+        } catch(UnknownHostException e) {
+
+            throw new UnknownHostException("Host address cannot be determined");
+
+        } catch (IOException e) {
+
+            System.out.println("IOException in Stub create");
+            e.printStackTrace();
+        }
+    }
+
+    private static<T> void interfaceCheck(Class<T> c) {
+        if (!c.isInterface()) {
+            throw new Error("Class is not interface");
+        }
+    }
+
+    private static<T> void remoteInterfaceCheck(Class<T> c) {
+
+        Method[] methods = c.getDeclaredMethods();
+        for(Method method : methods) {
+            Class<?>[] exceptions = method.getExceptionTypes();
+            boolean hasRMIExcept = false;
+            for(Class<?> exception : exceptions) {
+                if(exception.toString().equals("class rmi.RMIException")) {
+                    hasRMIExcept = true;
+                    break;
+                }
+            }
+            if(!hasRMIExcept){
+                throw new Error("Interface is not a remote interface");
+            }
+        }
     }
 
     /** Creates a stub, given a skeleton with an assigned address and a hostname
@@ -84,7 +147,18 @@ public abstract class Stub
     public static <T> T create(Class<T> c, Skeleton<T> skeleton,
                                String hostname)
     {
-        throw new UnsupportedOperationException("not implemented");
+        nullPointerCheck(new Object[]{c, skeleton, hostname});
+        skeletonPortCheck(skeleton);
+        interfaceCheck(c);
+        remoteInterfaceCheck(c);
+        return null; //TODO: return something
+    }
+
+    private static <T> void skeletonPortCheck(Skeleton<T> skeleton) {
+
+        if((skeleton.getInetSocketAddress() == null) || skeleton.getInetSocketAddress().getPort() == 0) {
+            throw new IllegalArgumentException("No port assigned to skeleton");
+        }
     }
 
     /** Creates a stub, given the address of a remote server.
@@ -106,6 +180,9 @@ public abstract class Stub
      */
     public static <T> T create(Class<T> c, InetSocketAddress address)
     {
-        throw new UnsupportedOperationException("not implemented");
+        nullPointerCheck(new Object[]{c, address});
+        interfaceCheck(c);
+        remoteInterfaceCheck(c);
+        return null; //TODO: return something
     }
 }

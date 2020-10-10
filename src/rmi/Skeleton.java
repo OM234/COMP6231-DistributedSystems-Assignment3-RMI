@@ -31,15 +31,28 @@ public class Skeleton<T>
     private InetSocketAddress address;
     private ServerSocket serverSocket;
     private ListenThread listenThread;
+    private boolean isRunning;
 
     private void constructorVerifications(Class<T> c, T server) {
+
+        nullPointerCheck(c, server);
+        interfaceCheck(c);
+        remoteInterfaceCheck(c);
+    }
+
+    private void nullPointerCheck(Class<T> c, T server) {
         if (c == null || server == null) {
             throw new NullPointerException();
         }
+    }
 
+    private void interfaceCheck(Class<T> c) {
         if (!c.isInterface()) {
             throw new Error("Class is not interface");
         }
+    }
+
+    private void remoteInterfaceCheck(Class<T> c) {
 
         Method[] methods = c.getDeclaredMethods();
         for(Method method : methods) {
@@ -179,6 +192,7 @@ public class Skeleton<T>
             serverSocket = new ServerSocket(address != null ? address.getPort() : 9999);
             listenThread = new ListenThread(serverSocket);
             listenThread.start();
+            isRunning = true;
         } catch(IOException e ){
             System.out.println("IOException when starting server");
             e.printStackTrace();
@@ -202,6 +216,16 @@ public class Skeleton<T>
         }
 
         listenThread.stopRun();
+        isRunning = false;
         stopped(null);
+    }
+
+    public boolean isServerRunning(){
+        return isRunning;
+    }
+
+    public InetSocketAddress getInetSocketAddress() {
+
+        return address;
     }
 }
