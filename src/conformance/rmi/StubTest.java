@@ -92,10 +92,10 @@ public class StubTest extends Test
         ensureNonRemoteInterfaceRejected();
         ensureNullPointerExceptions();
         ensureLocalMethods();
-//
-//        skeleton.stop();
-//
-//        ensureStubConnects();
+
+        skeleton.stop();
+
+        ensureStubConnects();
     }
 
     /** Checks that a stub connects to the server for which it was created.
@@ -432,39 +432,38 @@ public class StubTest extends Test
                                  "comparing unequal stubs", t);
         }
 
-//        // Check that the first two stubs have the same hash code.
-//        try
-//        {
-//            if(stub1.hashCode() != stub2.hashCode())
-//                throw new TestFailed("equal stubs have different hash codes");
-//        }
-//        catch(TestFailed e) { throw e; }
-//        catch(Throwable t)
-//        {
-//            throw new TestFailed("hashCode threw an unexpected exception", t);
-//        }
-//
+        // Check that the first two stubs have the same hash code.
+        try
+        {
+            if(stub1.hashCode() != stub2.hashCode())
+                throw new TestFailed("equal stubs have different hash codes");
+        }
+        catch(TestFailed e) { throw e; }
+        catch(Throwable t)
+        {
+            throw new TestFailed("hashCode threw an unexpected exception", t);
+        }
 //        // Check that the first and third stubs have different hash codes.
-//        try
-//        {
-//            if(stub1.hashCode() == stub3.hashCode())
-//                throw new TestFailed("unequal stubs have the same hash code");
-//        }
-//        catch(TestFailed e) { throw e; }
-//        catch(Throwable t)
-//        {
-//            throw new TestFailed("hashCode threw an unexpected exception", t);
-//        }
-//
+        try
+        {
+            if(stub1.hashCode() == stub3.hashCode())
+                throw new TestFailed("unequal stubs have the same hash code");
+        }
+        catch(TestFailed e) { throw e; }
+        catch(Throwable t)
+        {
+            throw new TestFailed("hashCode threw an unexpected exception", t);
+        }
+
 //        // Check that the toString method is implemented.
-//        try
-//        {
-//            stub1.toString();
-//        }
-//        catch(Throwable t)
-//        {
-//            throw new TestFailed("toString threw an unexpected exception", t);
-//        }
+        try
+        {
+            stub1.toString();
+        }
+        catch(Throwable t)
+        {
+            throw new TestFailed("toString threw an unexpected exception", t);
+        }
     }
 
     /** Thread listening for a connection. */
