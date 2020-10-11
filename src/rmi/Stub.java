@@ -1,6 +1,7 @@
 package rmi;
 
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Method;
 import java.net.*;
 
@@ -19,6 +20,9 @@ import java.net.*;
  */
 public abstract class Stub
 {
+
+    Skeleton skeleton;
+
     /** Creates a stub, given a skeleton with an assigned adress.
 
         <p>
@@ -55,7 +59,10 @@ public abstract class Stub
         hostConnectionCheck(skeleton);
         interfaceCheck(c);
         remoteInterfaceCheck(c);
-        return null; //TODO:return something
+
+        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(c, skeleton));
+
+        return newStub;
     }
 
     private static <T> void nullPointerCheck(Object[] toCheck) {
@@ -151,7 +158,10 @@ public abstract class Stub
         skeletonPortCheck(skeleton);
         interfaceCheck(c);
         remoteInterfaceCheck(c);
-        return null; //TODO: return something
+
+        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(c, skeleton));
+
+        return newStub;
     }
 
     private static <T> void skeletonPortCheck(Skeleton<T> skeleton) {
@@ -183,6 +193,9 @@ public abstract class Stub
         nullPointerCheck(new Object[]{c, address});
         interfaceCheck(c);
         remoteInterfaceCheck(c);
-        return null; //TODO: return something
+
+        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(c));
+
+        return newStub;
     }
 }

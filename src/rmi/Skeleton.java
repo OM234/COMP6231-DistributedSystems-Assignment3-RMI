@@ -92,7 +92,7 @@ public class Skeleton<T>
     public Skeleton(Class<T> c, T server)
     {
         constructorVerifications((Class<T>) c, server);
-        address = null;
+        address = new InetSocketAddress(0);
     }
 
     /** Creates a <code>Skeleton</code> with the given initial server address.
