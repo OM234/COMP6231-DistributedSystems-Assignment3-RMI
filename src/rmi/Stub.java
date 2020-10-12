@@ -20,9 +20,6 @@ import java.net.*;
  */
 public abstract class Stub
 {
-
-    Skeleton skeleton;
-
     /** Creates a stub, given a skeleton with an assigned adress.
 
         <p>
@@ -60,7 +57,7 @@ public abstract class Stub
         interfaceCheck(c);
         remoteInterfaceCheck(c);
 
-        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(c, skeleton));
+        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(skeleton.getServer(), skeleton));
 
         return newStub;
     }
@@ -159,7 +156,7 @@ public abstract class Stub
         interfaceCheck(c);
         remoteInterfaceCheck(c);
 
-        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(c, skeleton));
+        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(skeleton.getServer(), skeleton));
 
         return newStub;
     }
@@ -188,13 +185,23 @@ public abstract class Stub
                       <code>RMIException</code>, or if an object implementing
                       this interface cannot be dynamically created.
      */
-    public static <T> T create(Class<T> c, InetSocketAddress address)
-    {
+    public static <T> T create(Class<T> c, InetSocketAddress address) {
         nullPointerCheck(new Object[]{c, address});
         interfaceCheck(c);
         remoteInterfaceCheck(c);
 
-        T newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(c));
+        T newStub = null;
+
+        if(!Skeleton.skeletonMap.containsKey(address)) {
+            System.out.println("Skeleton does not exist");
+            newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy());
+        } else {
+            System.out.println(Skeleton.skeletonMap.get(address).getServer().getClass());
+            System.out.println(c.getClass());
+
+            Skeleton skeleton = Skeleton.skeletonMap.get(address);
+            newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(skeleton.getServer(), skeleton));
+        }
 
         return newStub;
     }

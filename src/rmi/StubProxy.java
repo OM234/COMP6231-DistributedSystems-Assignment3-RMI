@@ -1,10 +1,9 @@
 package rmi;
 
+import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class StubProxy implements InvocationHandler {
@@ -12,8 +11,8 @@ public class StubProxy implements InvocationHandler {
     Object target;
     Skeleton skeleton;
 
-    public StubProxy(Object object){
-        target = object;
+    public StubProxy(){
+        target = null;
         skeleton = null;
     }
 
@@ -23,7 +22,7 @@ public class StubProxy implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws InvocationTargetException, IllegalAccessException, RMIException {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
         String name = method.getName();
 
@@ -35,11 +34,26 @@ public class StubProxy implements InvocationHandler {
             return Objects.hash(skeleton);
         }
 
+        if(method.getName().equals("toString")) {
+            return (this.toString());
+        }
+
+        if (skeleton == null || target == null) {
+            throw new RMIException("No skeleton or target");
+        }
+
         try {
             return method.invoke(target, args);
-        } catch (IllegalArgumentException e) {
-            throw new RMIException("Method does not exist");
         }
+        catch (InvocationTargetException e) {
+
+            throw e.getTargetException();
+        }
+//        catch (Exception e) {
+//            e.printStackTrace();
+//            throw new RMIException("Method does not exist");
+//        }
+        //return null;
     }
 
     private boolean isEqual(Object[] args) {

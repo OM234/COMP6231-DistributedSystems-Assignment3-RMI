@@ -3,6 +3,8 @@ package rmi;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /** RMI skeleton
 
@@ -31,6 +33,8 @@ public class Skeleton<T>
     private InetSocketAddress address;
     private ServerSocket serverSocket;
     private ListenThread listenThread;
+    public static Map<InetSocketAddress, Skeleton> skeletonMap = new HashMap<>();
+    private T server;
     private boolean isRunning;
 
     private void constructorVerifications(Class<T> c, T server) {
@@ -70,6 +74,14 @@ public class Skeleton<T>
         }
     }
 
+    public void setServer(T server) {
+        this.server = server;
+    }
+
+    public T getServer() {
+        return server;
+    }
+
     /** Creates a <code>Skeleton</code> with no initial server address. The
         address will be determined by the system when <code>start</code> is
         called. Equivalent to using <code>Skeleton(null)</code>.
@@ -93,6 +105,8 @@ public class Skeleton<T>
     {
         constructorVerifications((Class<T>) c, server);
         address = new InetSocketAddress(0);
+        setServer(server);
+        skeletonMap.put(address, this);
     }
 
     /** Creates a <code>Skeleton</code> with the given initial server address.
@@ -117,6 +131,8 @@ public class Skeleton<T>
     {
         constructorVerifications((Class<T>) c, server);
         this.address = address;
+        setServer(server);
+        skeletonMap.put(address, this);
     }
 
     /** Called when the listening thread exits.
@@ -218,6 +234,7 @@ public class Skeleton<T>
         listenThread.stopRun();
         isRunning = false;
         stopped(null);
+        skeletonMap.remove(address);
     }
 
     public boolean isServerRunning(){

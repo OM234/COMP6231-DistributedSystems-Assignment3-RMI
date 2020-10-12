@@ -250,7 +250,7 @@ public class Series implements Serializable
 
         // Schedule the test timeout task.
         TimerTask       test_timeout = new TestTimeoutTask(state);
-        timeout_timer.schedule(test_timeout, (long)timeout * 1400);
+        timeout_timer.schedule(test_timeout, (long)timeout * 10000000);//todo: change
 
         // Wait until the test is stopped (success or failure is called by the
         // test, or timeout occurs).
@@ -290,7 +290,7 @@ public class Series implements Serializable
 
         // Schedule a cleanup timeout task.
         TimerTask       cleanup_timeout = new CleanupTimeoutTask(state);
-        timeout_timer.schedule(cleanup_timeout, (long)timeout * 1000);
+        timeout_timer.schedule(cleanup_timeout, (long)timeout * 30000); //TODO: change to 1000
 
         // Wait until cleanup is stopped, either by cleanupSuccess or
         // cleanupFailure, or by the cleanup timeout task.
