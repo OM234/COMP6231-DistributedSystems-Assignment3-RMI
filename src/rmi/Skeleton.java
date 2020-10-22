@@ -104,7 +104,7 @@ public class Skeleton<T>
     public Skeleton(Class<T> c, T server)
     {
         constructorVerifications((Class<T>) c, server);
-        address = new InetSocketAddress(0);
+        address = new InetSocketAddress(500);
         setServer(server);
         skeletonMap.put(address, this);
     }
@@ -239,6 +239,11 @@ public class Skeleton<T>
 
     public boolean isServerRunning(){
         return isRunning;
+    }
+
+    public void setInetSocketAddress(InetSocketAddress inetSocketAddress){
+
+        this.address = inetSocketAddress;
     }
 
     public InetSocketAddress getInetSocketAddress() {

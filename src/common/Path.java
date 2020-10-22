@@ -62,8 +62,6 @@ public class Path implements Iterable<String>, Serializable
         } else {
             pathStr = path.pathStr.concat("/").concat(component);
         }
-
-
     }
 
     /** Creates a new path from a path string.

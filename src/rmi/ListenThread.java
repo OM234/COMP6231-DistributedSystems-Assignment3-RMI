@@ -26,7 +26,7 @@ public class ListenThread extends Thread {
                 System.out.println("New connection from " + socket.getRemoteSocketAddress());
             } catch (IOException e) {
                 System.out.println("IOException while connecting to socket");
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
     }
