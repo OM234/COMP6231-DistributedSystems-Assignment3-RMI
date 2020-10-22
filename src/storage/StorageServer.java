@@ -3,7 +3,9 @@ package storage;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import common.*;
 import rmi.*;
@@ -239,7 +241,39 @@ public class StorageServer implements Storage, Command
     @Override
     public synchronized boolean create(Path file)
     {
-        throw new UnsupportedOperationException("not implemented");
+        File toCreate;
+        String[] components;
+
+        if(file == null) {
+            throw new NullPointerException();
+        }
+        if(file.isRoot()) {
+            return false;
+        }
+
+        toCreate = new File(this.root + file.toString());
+        if(toCreate.exists()){
+            return false;
+        }
+
+        components = file.toString().substring(1).split("/");
+        toCreate = this.root;
+
+        for(int i = 0; i < components.length; i++){
+
+            toCreate = new File(toCreate, components[i]);
+            if(!toCreate.exists() && i != components.length-1) {
+                toCreate.mkdir();
+            } else if(i == components.length-1) {
+                try {
+                    toCreate.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override
@@ -249,6 +283,31 @@ public class StorageServer implements Storage, Command
 
         File toDelete = new File(this.root, path.toString());
 
-        return toDelete.delete();
+        if(!toDelete.exists()) {
+            return false;
+        }
+
+        if(toDelete.isFile()) {
+            return toDelete.delete();
+        }
+
+        recursiveFileDelete(toDelete);
+
+        return true;
+    }
+
+    public void recursiveFileDelete(File toDelete) {
+
+        for(File file : toDelete.listFiles()) {
+
+            if(file == null) return;
+
+            if(file.isDirectory()) {
+                recursiveFileDelete(file);
+            }
+            file.delete();
+        }
+
+        toDelete.delete();
     }
 }
