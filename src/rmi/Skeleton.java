@@ -36,6 +36,7 @@ public class Skeleton<T>
     public static Map<InetSocketAddress, Skeleton> skeletonMap = new HashMap<>();
     private T server;
     private boolean isRunning;
+    private static int portNum = 500;
 
     private void constructorVerifications(Class<T> c, T server) {
 
@@ -104,7 +105,7 @@ public class Skeleton<T>
     public Skeleton(Class<T> c, T server)
     {
         constructorVerifications((Class<T>) c, server);
-        address = new InetSocketAddress(500);
+        address = new InetSocketAddress(portNum++);
         setServer(server);
         skeletonMap.put(address, this);
     }
@@ -241,9 +242,9 @@ public class Skeleton<T>
         return isRunning;
     }
 
-    public void setInetSocketAddress(InetSocketAddress inetSocketAddress){
+    public void setInetSocketAddress(InetAddress inetAddress){
 
-        this.address = inetSocketAddress;
+        this.address = new InetSocketAddress(inetAddress, this.address.getPort());
     }
 
     public InetSocketAddress getInetSocketAddress() {

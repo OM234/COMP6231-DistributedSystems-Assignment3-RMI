@@ -193,11 +193,11 @@ public abstract class Stub
         T newStub = null;
 
         if(!Skeleton.skeletonMap.containsKey(address)) {
-            System.out.println("Skeleton does not exist");
+//            System.out.println("Skeleton does not exist");
             newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy());
         } else {
-            System.out.println(Skeleton.skeletonMap.get(address).getServer().getClass());
-            System.out.println(c.getClass());
+//            System.out.println(Skeleton.skeletonMap.get(address).getServer().getClass());
+//            System.out.println(c.getClass());
 
             Skeleton skeleton = Skeleton.skeletonMap.get(address);
             newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(skeleton.getServer(), skeleton));

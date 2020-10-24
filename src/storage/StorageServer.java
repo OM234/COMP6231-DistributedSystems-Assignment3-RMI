@@ -25,7 +25,6 @@ public class StorageServer implements Storage, Command
     private Skeleton<Command> commandSkeleton;
     private Storage storageStub;
     private Command commandStub;
-    private static int portNum = 501;
 
 
     /** Creates a storage server, given a directory on the local filesystem.
@@ -84,8 +83,8 @@ public class StorageServer implements Storage, Command
     private void StartSkeletons(String hostname) throws UnknownHostException, RMIException {
 
         InetAddress inetAddress = InetAddress.getByName(hostname);
-        storageSkeleton.setInetSocketAddress(new InetSocketAddress(inetAddress, portNum++));
-        commandSkeleton.setInetSocketAddress(new InetSocketAddress(inetAddress, portNum++));
+        storageSkeleton.setInetSocketAddress(inetAddress);
+        commandSkeleton.setInetSocketAddress(inetAddress);
         storageSkeleton.start();
         commandSkeleton.start();
     }

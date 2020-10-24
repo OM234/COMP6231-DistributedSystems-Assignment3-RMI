@@ -2,6 +2,7 @@ package naming;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.util.*;
 
 import rmi.*;
 import common.*;
@@ -35,6 +36,10 @@ public class NamingServer implements Service, Registration
 
     Skeleton<Service> serviceSkeleton;
     Skeleton<Registration> registrationSkeleton;
+    Set<Storage> clientStubs;
+    Set<Command> commandStubs;
+    Map<Path, Storage> pathStorageMap;
+
     /** Creates the naming server object.
 
         <p>
@@ -42,6 +47,9 @@ public class NamingServer implements Service, Registration
      */
     public NamingServer()
     {
+        clientStubs = new HashSet<>();
+        commandStubs = new HashSet<>();
+        pathStorageMap = new HashMap<>();
     }
 
     /** Starts the naming server.
@@ -58,9 +66,9 @@ public class NamingServer implements Service, Registration
     public synchronized void start() throws RMIException
     {
         serviceSkeleton = new Skeleton<Service>(
-                Service.class, new NamingServer(), new InetSocketAddress(NamingStubs.SERVICE_PORT));
+                Service.class, new NamingServer(), new InetSocketAddress("127.0.0.1", NamingStubs.SERVICE_PORT));
         registrationSkeleton = new Skeleton<Registration>(
-                Registration.class, new NamingServer(), new InetSocketAddress(NamingStubs.REGISTRATION_PORT));
+                Registration.class, new NamingServer(), new InetSocketAddress("127.0.0.1", NamingStubs.REGISTRATION_PORT));
 
         serviceSkeleton.start();
         registrationSkeleton.start();
@@ -138,6 +146,47 @@ public class NamingServer implements Service, Registration
     public Path[] register(Storage client_stub, Command command_stub,
                            Path[] files)
     {
-        throw new UnsupportedOperationException("not implemented");
+        if(client_stub == null || command_stub == null || files == null) {
+            throw new NullPointerException("Cannot pass null parameters");
+        }
+
+        if(clientStubs.contains(client_stub) || commandStubs.contains(command_stub)) {
+            throw new IllegalStateException("Storage server already registered");
+        }
+
+        List<Path> toDeleteList = new ArrayList<>();
+
+        clientStubs.add(client_stub);
+        commandStubs.add(command_stub);
+
+        Arrays.stream(files).forEach(path -> {
+
+            if(pathStorageMap.containsKey(path)) {
+                toDeleteList.add(path);
+            }
+        });
+
+        Arrays.stream(files)
+                .filter(path -> !pathStorageMap.containsKey(path))
+                .forEach(e -> addPathComponentsToMap(e, client_stub));
+                //.forEach(path -> pathStorageMap.put(path, client_stub));
+
+        return toDeleteList.toArray(new Path[toDeleteList.size()]);
+    }
+
+    private void addPathComponentsToMap(Path file, Storage client_stub){
+
+        String[] components = file.toString().substring(1).split("/");
+
+        if(components.length >= 2) {
+            Path path = new Path("/" + components[0]);
+            pathStorageMap.put(path, client_stub);
+            for(int i = 1; i < components.length-1; i++){
+                path = new Path(path, components[i]);
+                pathStorageMap.put(path, client_stub);
+            }
+        }
+        //Arrays.stream(components).map(e -> new Path("/" + e)).forEach(e -> pathStorageMap.put(e, client_stub));
+        pathStorageMap.put(file, client_stub);
     }
 }
