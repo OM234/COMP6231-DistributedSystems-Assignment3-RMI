@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class NamingServer implements Service, Registration {
 
-    static Map<Path, Storage> pathStorageMap = new HashMap<>();
+    static DirectoryMap directoryMap;
     Skeleton<Service> serviceSkeleton;
     Skeleton<Registration> registrationSkeleton;
     Set<Storage> clientStubs;
@@ -51,9 +51,7 @@ public class NamingServer implements Service, Registration {
     public NamingServer() {
         clientStubs = new HashSet<>();
         commandStubs = new HashSet<>();
-        pathStorageMap = new HashMap<>();
-
-        pathStorageMap.put(new Path("/"), null);
+        directoryMap = new DirectoryMap();
     }
 
     /**
@@ -113,16 +111,11 @@ public class NamingServer implements Service, Registration {
         if (path == null) {
             throw new NullPointerException("Path for isDirectory cannot be null");
         }
-        if (!pathStorageMap.containsKey(path)) {
+        if (!directoryMap.pathExists(path)) {
             throw new FileNotFoundException("directory not found");
         }
 
-        //If this File is a directory, there should be at least 2 entries in the directory tree (pathStorageMap)
-        //which contain this File.toString()
-        return pathStorageMap.keySet()
-                .stream()
-                .filter(pathInMap -> pathInMap.toString().contains(path.toString()))
-                .count() > 2;
+        return directoryMap.isFolder(path);
     }
 
     @Override
@@ -130,36 +123,34 @@ public class NamingServer implements Service, Registration {
         if (directory == null) {
             throw new NullPointerException("Path for list method cannot be null");
         }
-        if (!pathStorageMap.containsKey(directory)) {
+        if (!directoryMap.pathExists(directory)) {
             throw new FileNotFoundException("directory not found");
         }
-        if (!isDirectory(directory)) {
+        if (!directoryMap.isFolder(directory)) {
             throw new FileNotFoundException("not a directory");
         }
 
-        String paths[] = pathStorageMap.keySet()
-                .stream()
-                .filter(path -> path.toString().startsWith(directory.toString()) && !path.toString().equals(directory.toString()))
-                .map(path -> {
-                    if (directory.toString().equals("/"))
-                        return path.toString().substring(directory.toString().length());
-                    else
-                        return path.toString().substring(directory.toString().length() + 1);
-                })
-                .filter(path -> !path.contains("/"))
-                .toArray(String[]::new);
-
-        return paths;
+        return directoryMap.list(directory);
     }
 
     @Override
     public boolean createFile(Path file)
             throws RMIException, FileNotFoundException {
+
+        if (file == null) {
+            throw new NullPointerException("file cannot be null");
+        }
+
         throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
     public boolean createDirectory(Path directory) throws FileNotFoundException {
+
+        if (directory == null) {
+            throw new NullPointerException("directory cannot be null");
+        }
+
         throw new UnsupportedOperationException("not implemented");
     }
 
@@ -191,40 +182,83 @@ public class NamingServer implements Service, Registration {
         Path[] toDelete = getToDeleteArr(files);
 
         Arrays.stream(files)
-                .filter(path -> !pathStorageMap.containsKey(path))
-                .forEach(e -> addPathComponentsToMap(e, client_stub));
+                .forEach(directoryMap::addPath);
 
         return toDelete;
     }
 
     private Path[] getToDeleteArr(Path[] files) {
 
-        List<Path> toDeleteList = new ArrayList<>();
-
-        Arrays.stream(files).forEach(path -> {
-
-            if (pathStorageMap.containsKey(path)) {
-                toDeleteList.add(path);
-            }
-        });
-
-        toDeleteList.remove(new Path("/"));
-
-        return toDeleteList.toArray(new Path[toDeleteList.size()]);
+        return Arrays.stream(files)
+                .filter(file -> !file.toString().equals("/"))
+                .filter(file -> directoryMap.pathExists(file)).toArray(Path[]::new);
     }
 
-    private void addPathComponentsToMap(Path file, Storage client_stub) {
+    private class DirectoryMap {
 
-        String[] components = file.toString().substring(1).split("/");
+        Map<String, DirectoryMap> current;
+        private boolean isFolder;
 
-        if (components.length >= 2) {
-            Path path = new Path("/" + components[0]);
-            pathStorageMap.put(path, client_stub);
-            for (int i = 1; i < components.length - 1; i++) {
-                path = new Path(path, components[i]);
-                pathStorageMap.put(path, client_stub);
-            }
+        public DirectoryMap() {
+            current = new HashMap<>();
+            isFolder = true;
         }
-        pathStorageMap.put(file, client_stub);
+
+        public void addPath(Path path) {
+
+            if(path.toString().equals("/")) return;
+
+            String[] paths = Utilities.getPathComponents(path);
+            Map<String, DirectoryMap> traverse = current;
+
+            for(int i = 0 ; i < paths.length -1; i++){
+                if(!traverse.containsKey(paths[i])) {
+                    traverse.put(paths[i], new DirectoryMap());
+                }
+                traverse = traverse.get(paths[i]).current;
+            }
+            traverse.put(paths[paths.length-1], new DirectoryMap());
+            traverse.get(paths[paths.length-1]).isFolder = false;
+        }
+
+        public boolean pathExists(Path path) {
+
+            if(path.toString().equals("/")) return true;
+
+            String[] paths = Utilities.getPathComponents(path);
+            Map<String, DirectoryMap> traverse = current;
+
+            for(int i = 0; i < paths.length; i++){
+                if(!traverse.containsKey(paths[i])) return false;
+                traverse = traverse.get(paths[i]).current;
+            }
+            return true;
+        }
+
+        public boolean isFolder(Path path){
+
+            if(path.toString().equals("/")) return true;
+
+            String[] paths = Utilities.getPathComponents(path);
+            Map<String, DirectoryMap> traverse = current;
+
+            for(int i = 0; i < paths.length-1; i++){
+                traverse = traverse.get(paths[i]).current;
+            }
+
+            return traverse.get(paths[paths.length-1]).isFolder;
+        }
+
+        public String[] list(Path path){
+
+            String[] paths = Utilities.getPathComponents(path);
+            Map<String, DirectoryMap> traverse = current;
+
+            for(int i = 0; i < paths.length; i++){
+                traverse = traverse.get(paths[i]).current;
+            }
+
+            return traverse.keySet().stream().toArray(String[]::new);
+        }
     }
 }
