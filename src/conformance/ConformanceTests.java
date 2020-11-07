@@ -45,7 +45,7 @@ public class ConformanceTests
                          conformance.naming.RegistrationTest.class,
                          conformance.naming.ListingTest.class,
                          conformance.naming.CreationTest.class,
-                         /*conformance.naming.StubRetrievalTest.class*/};
+                         conformance.naming.StubRetrievalTest.class};
         Series                      series = new Series(tests);
         SeriesReport                report = series.run(3, System.out);
 

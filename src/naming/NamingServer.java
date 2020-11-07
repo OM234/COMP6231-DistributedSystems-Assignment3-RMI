@@ -39,8 +39,8 @@ public class NamingServer implements Service, Registration {
     static DirectoryMap directoryMap;
     Skeleton<Service> serviceSkeleton;
     Skeleton<Registration> registrationSkeleton;
-    Set<Storage> clientStubs;
-    Set<Command> commandStubs;
+    static Set<Storage> clientStubs;
+    static Set<Command> commandStubs;
 
     /**
      * Creates the naming server object.
@@ -120,6 +120,7 @@ public class NamingServer implements Service, Registration {
 
     @Override
     public String[] list(Path directory) throws FileNotFoundException {
+
         if (directory == null) {
             throw new NullPointerException("Path for list method cannot be null");
         }
@@ -140,8 +141,16 @@ public class NamingServer implements Service, Registration {
         if (file == null) {
             throw new NullPointerException("file cannot be null");
         }
+        if(!directoryMap.parentExists(file)) {
+            throw new FileNotFoundException("Parent Directory does not exist");
+        }
+        if(directoryMap.pathExists(file)) {
+            return false;
+        }
 
-        throw new UnsupportedOperationException("not implemented");
+        commandStubs.iterator().next().create(file);
+
+        return directoryMap.addPath(file);
     }
 
     @Override
@@ -151,7 +160,15 @@ public class NamingServer implements Service, Registration {
             throw new NullPointerException("directory cannot be null");
         }
 
-        throw new UnsupportedOperationException("not implemented");
+        if(directoryMap.pathExists(directory)) {
+            return false;
+        }
+
+        if(!directoryMap.parentExists(directory)) {
+            throw new FileNotFoundException("Parent Directory does not exist");
+        }
+
+        return directoryMap.addPathDirectory(directory);
     }
 
     @Override
@@ -204,9 +221,9 @@ public class NamingServer implements Service, Registration {
             isFolder = true;
         }
 
-        public void addPath(Path path) {
+        public boolean addPath(Path path) {
 
-            if(path.toString().equals("/")) return;
+            if(path.toString().equals("/")) return false;
 
             String[] paths = Utilities.getPathComponents(path);
             Map<String, DirectoryMap> traverse = current;
@@ -219,7 +236,57 @@ public class NamingServer implements Service, Registration {
             }
             traverse.put(paths[paths.length-1], new DirectoryMap());
             traverse.get(paths[paths.length-1]).isFolder = false;
+
+            return true;
         }
+
+        public boolean addPathDirectory(Path path){
+
+            //if(!parentExists(path)) return false;
+
+            String[] paths = Utilities.getPathComponents(path);
+            Map<String, DirectoryMap> traverse = current;
+
+            for(int i = 0 ; i < paths.length -1; i++){
+                if(!traverse.containsKey(paths[i])) {
+                    traverse.put(paths[i], new DirectoryMap());
+                }
+                traverse = traverse.get(paths[i]).current;
+            }
+            traverse.put(paths[paths.length-1], new DirectoryMap());
+            traverse.get(paths[paths.length-1]).isFolder = true;
+
+            return true;
+        }
+
+//        private boolean addPathFileOrDirectory(Path path) {
+//
+//            String[] paths = Utilities.getPathComponents(path);
+//            Map<String, DirectoryMap> traverse = current;
+//
+//            for(int i = 0 ; i < paths.length -1; i++){
+//                if(!traverse.containsKey(paths[i])) {
+//                    traverse.put(paths[i], new DirectoryMap());
+//                }
+//                traverse = traverse.get(paths[i]).current;
+//            }
+//            traverse.put(paths[paths.length-1], new DirectoryMap());
+//            traverse.get(paths[paths.length-1]).isFolder = false;
+//
+//            return true;
+//        }
+
+        private boolean parentExists(Path path){
+
+            String[] paths = Utilities.getPathComponents(path);
+            Path pathTemp = new Path("/");
+
+            for(int i = 0 ; i < paths.length - 1; i++) {
+                pathTemp = new Path(pathTemp, paths[i]);
+            }
+
+            return pathExists(pathTemp) && isFolder(pathTemp);
+         }
 
         public boolean pathExists(Path path) {
 
