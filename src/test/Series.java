@@ -250,7 +250,7 @@ public class Series implements Serializable
 
         // Schedule the test timeout task.
         TimerTask       test_timeout = new TestTimeoutTask(state);
-        timeout_timer.schedule(test_timeout, (long)timeout * 1400);//todo: change
+        timeout_timer.schedule(test_timeout, (long)timeout * 1000000);//todo: change
 
         // Wait until the test is stopped (success or failure is called by the
         // test, or timeout occurs).

@@ -150,7 +150,7 @@ public class NamingServer implements Service, Registration {
 
         commandStubs.iterator().next().create(file);
 
-        return directoryMap.addPath(file);
+        return directoryMap.addPath(file, commandStubs.iterator().next(), clientStubs.iterator().next());
     }
 
     @Override
@@ -168,7 +168,7 @@ public class NamingServer implements Service, Registration {
             throw new FileNotFoundException("Parent Directory does not exist");
         }
 
-        return directoryMap.addPathDirectory(directory);
+        return directoryMap.addPathDirectory(directory, commandStubs.iterator().next(), clientStubs.iterator().next());
     }
 
     @Override
@@ -178,7 +178,18 @@ public class NamingServer implements Service, Registration {
 
     @Override
     public Storage getStorage(Path file) throws FileNotFoundException {
-        throw new UnsupportedOperationException("not implemented");
+
+        if(file == null) {
+            throw new NullPointerException();
+        }
+        if(!directoryMap.pathExists(file)){
+            throw new FileNotFoundException();
+        }
+        if(directoryMap.isFolder(file)) {
+            throw new FileNotFoundException("No storage stub with a directory");
+        }
+
+        return directoryMap.getStorageStub(file);
     }
 
     // The method register is documented in Registration.java.
@@ -199,7 +210,8 @@ public class NamingServer implements Service, Registration {
         Path[] toDelete = getToDeleteArr(files);
 
         Arrays.stream(files)
-                .forEach(directoryMap::addPath);
+                .filter(file -> Arrays.stream(toDelete).noneMatch(toDelFile -> toDelFile == file))
+                .forEach(file -> directoryMap.addPath(file, command_stub, client_stub));
 
         return toDelete;
     }
@@ -215,13 +227,20 @@ public class NamingServer implements Service, Registration {
 
         Map<String, DirectoryMap> current;
         private boolean isFolder;
+        private Command commandStub;
+        private Storage storageStub;
+        private Map<String, Command> commandStubMap;
+        private Map<String, Storage> storageStubMap;
 
         public DirectoryMap() {
             current = new HashMap<>();
             isFolder = true;
+            commandStub = null;
+            commandStubMap = new HashMap<>();
+            storageStubMap = new HashMap<>();
         }
 
-        public boolean addPath(Path path) {
+        public boolean addPath(Path path, Command commandStub, Storage storageStub) {
 
             if(path.toString().equals("/")) return false;
 
@@ -236,11 +255,13 @@ public class NamingServer implements Service, Registration {
             }
             traverse.put(paths[paths.length-1], new DirectoryMap());
             traverse.get(paths[paths.length-1]).isFolder = false;
+            traverse.get(paths[paths.length-1]).storageStubMap.put(paths[paths.length-1], storageStub);
+            traverse.get(paths[paths.length-1]).commandStubMap.put(paths[paths.length-1], commandStub);
 
             return true;
         }
 
-        public boolean addPathDirectory(Path path){
+        public boolean addPathDirectory(Path path, Command commandStub, Storage storageStub){
 
             //if(!parentExists(path)) return false;
 
@@ -253,8 +274,11 @@ public class NamingServer implements Service, Registration {
                 }
                 traverse = traverse.get(paths[i]).current;
             }
+
             traverse.put(paths[paths.length-1], new DirectoryMap());
             traverse.get(paths[paths.length-1]).isFolder = true;
+            traverse.get(paths[paths.length-1]).storageStubMap.put(paths[paths.length-1], storageStub);
+            traverse.get(paths[paths.length-1]).commandStubMap.put(paths[paths.length-1], commandStub);
 
             return true;
         }
@@ -326,6 +350,30 @@ public class NamingServer implements Service, Registration {
             }
 
             return traverse.keySet().stream().toArray(String[]::new);
+        }
+
+//        public Command getCommandStub(Path path){
+//
+//            String[] paths = Utilities.getPathComponents(path);
+//            Map<String, DirectoryMap> traverse = current;
+//
+//            for(int i = 0; i < paths.length-1; i++){
+//                traverse = traverse.get(paths[i]).current;
+//            }
+//
+//            return traverse.get(paths[paths.length-1]).commandStub;
+//        }
+
+        public Storage getStorageStub(Path path){
+
+            String[] paths = Utilities.getPathComponents(path);
+            Map<String, DirectoryMap> traverse = current;
+
+            for(int i = 0; i < paths.length-1; i++){
+                traverse = traverse.get(paths[i]).current;
+            }
+
+            return traverse.get(paths[paths.length-1]).storageStubMap.get(paths[paths.length-1]);
         }
     }
 }

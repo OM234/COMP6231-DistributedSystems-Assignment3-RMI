@@ -24,20 +24,15 @@ public class StubProxy implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-        String name = method.getName();
-
         if(method.getName().equals("equals")) {
             return isEqual(args);
         }
-
         if(method.getName().equals("hashCode")) {
             return Objects.hash(skeleton);
         }
-
         if(method.getName().equals("toString")) {
             return (this.toString());
         }
-
         if (skeleton == null || target == null) {
             throw new RMIException("No skeleton or target");
         }
