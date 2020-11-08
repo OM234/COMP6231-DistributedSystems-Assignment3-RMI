@@ -30,14 +30,42 @@ import java.util.Map;
 */
 public class Skeleton<T>
 {
+    /**
+     * Address to connect to
+     */
     private InetSocketAddress address;
+    /**
+     * Associated serverSocket object
+     */
     private ServerSocket serverSocket;
+    /**
+     * Associated ListenThread object
+     */
     private ListenThread listenThread;
+    /**
+     * Map of addresses to their associated Skeleton
+     */
     public static Map<InetSocketAddress, Skeleton> skeletonMap = new HashMap<>();
+    /**
+     * Associated server of this Skeleton
+     */
     private T server;
+    /**
+     * If the skeleton is running or not
+     */
     private boolean isRunning;
+    /**
+     * port number of skeletons, used when port number is not already defined
+     */
     private static int portNum = 500;
 
+
+    /**
+     * Performs verifications during Skeleton construction
+     *
+     * @param c interface associated with this Skeleton
+     * @param server associated with this Skeleton
+     */
     private void constructorVerifications(Class<T> c, T server) {
 
         nullPointerCheck(c, server);
@@ -45,18 +73,34 @@ public class Skeleton<T>
         remoteInterfaceCheck(c);
     }
 
+    /**
+     * Checks that no parameters are null
+     *
+     * @param c interface associated with this Skeleton
+     * @param server server associated with this Skeleton
+     */
     private void nullPointerCheck(Class<T> c, T server) {
         if (c == null || server == null) {
             throw new NullPointerException();
         }
     }
 
+    /**
+     * Checks that the class parameters represents an interface
+     *
+     * @param c interface associated with this Skeleton
+     */
     private void interfaceCheck(Class<T> c) {
         if (!c.isInterface()) {
             throw new Error("Class is not interface");
         }
     }
 
+    /**
+     * Checks the the class c represents a remote interface such that all methods throw RMIException
+     *
+     * @param c interface associated with this Skeleton
+     */
     private void remoteInterfaceCheck(Class<T> c) {
 
         Method[] methods = c.getDeclaredMethods();
@@ -73,14 +117,6 @@ public class Skeleton<T>
                 throw new Error("Interface is not a remote interface");
             }
         }
-    }
-
-    public void setServer(T server) {
-        this.server = server;
-    }
-
-    public T getServer() {
-        return server;
     }
 
     /** Creates a <code>Skeleton</code> with no initial server address. The
@@ -105,6 +141,7 @@ public class Skeleton<T>
     public Skeleton(Class<T> c, T server)
     {
         constructorVerifications((Class<T>) c, server);
+        //Increase port number of address, for next Skeleton constructor
         address = new InetSocketAddress(portNum++);
         setServer(server);
         skeletonMap.put(address, this);
@@ -206,7 +243,7 @@ public class Skeleton<T>
     public synchronized void start() throws RMIException {
 
         try {
-            serverSocket = new ServerSocket(address != null ? address.getPort() : 9999);
+            serverSocket = new ServerSocket(address.getPort());
             listenThread = new ListenThread(serverSocket);
             listenThread.start();
             isRunning = true;
@@ -238,17 +275,50 @@ public class Skeleton<T>
         skeletonMap.remove(address);
     }
 
+    /**
+     * Returns whether server is running
+     *
+     * @return true is server is running, false otherwise
+     */
     public boolean isServerRunning(){
         return isRunning;
     }
 
+    /**
+     * Setter for inetAddress
+     *
+     * @param inetAddress to be set
+     */
     public void setInetSocketAddress(InetAddress inetAddress){
 
         this.address = new InetSocketAddress(inetAddress, this.address.getPort());
     }
 
+    /**
+     * Getter for inetAddress
+     *
+     * @return this inetAddress
+     */
     public InetSocketAddress getInetSocketAddress() {
 
         return address;
+    }
+
+    /**
+     * Setter for this server
+     *
+     * @param server to be set
+     */
+    public void setServer(T server) {
+        this.server = server;
+    }
+
+    /**
+     * Getter for this server
+     *
+     * @return this server
+     */
+    public T getServer() {
+        return server;
     }
 }

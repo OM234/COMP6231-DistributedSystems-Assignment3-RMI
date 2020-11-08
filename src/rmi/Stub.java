@@ -62,7 +62,12 @@ public abstract class Stub
         return newStub;
     }
 
-    private static <T> void nullPointerCheck(Object[] toCheck) {
+    /**
+     * check that interface is not full
+     *
+     * @param toCheck class to check if null
+     */
+    private static void nullPointerCheck(Object[] toCheck) {
 
         for(Object object : toCheck) {
             if(object == null) {
@@ -71,6 +76,12 @@ public abstract class Stub
         }
     }
 
+    /**
+     * Ensures that the associated server is running
+     *
+     * @param skeleton associated with stub
+     * @param <T> interface associated with stub
+     */
     private static <T> void serverRunningCheck(Skeleton<T> skeleton) {
 
         if(!skeleton.isServerRunning()) {
@@ -78,31 +89,48 @@ public abstract class Stub
         }
     }
 
+    /**
+     * Attempt to connect to the skeleton
+     *
+     * @param skeleton to connect to
+     * @param <T> interface associated with stub
+     * @throws UnknownHostException if the connection cannot be made
+     */
     private static <T> void hostConnectionCheck(Skeleton<T> skeleton) throws UnknownHostException {
 
         InetSocketAddress address = skeleton.getInetSocketAddress();
         try(Socket socket = new Socket(address.getHostName(), address.getPort())) {
 
         } catch(UnknownHostException e) {
-
             throw new UnknownHostException("Host address cannot be determined");
-
         } catch (IOException e) {
-
             System.out.println("IOException in Stub create");
             e.printStackTrace();
         }
     }
 
+    /**
+     * Checks the the class associated with stub is an interface
+     *
+     * @param c class to check
+     * @param <T> interface associated with class
+     */
     private static<T> void interfaceCheck(Class<T> c) {
         if (!c.isInterface()) {
             throw new Error("Class is not interface");
         }
     }
 
+    /**
+     * Checks the the class associated with stub is a remote interface
+     *
+     * @param c class to check
+     * @param <T> interface associated with class
+     */
     private static<T> void remoteInterfaceCheck(Class<T> c) {
 
         Method[] methods = c.getDeclaredMethods();
+
         for(Method method : methods) {
             Class<?>[] exceptions = method.getExceptionTypes();
             boolean hasRMIExcept = false;
@@ -161,6 +189,12 @@ public abstract class Stub
         return newStub;
     }
 
+    /**
+     * ensures that the skeleton is assigned a port
+     *
+     * @param skeleton associated with stub
+     * @param <T> interface with stub is associated with
+     */
     private static <T> void skeletonPortCheck(Skeleton<T> skeleton) {
 
         if((skeleton.getInetSocketAddress() == null) || skeleton.getInetSocketAddress().getPort() == 0) {
@@ -193,12 +227,8 @@ public abstract class Stub
         T newStub = null;
 
         if(!Skeleton.skeletonMap.containsKey(address)) {
-//            System.out.println("Skeleton does not exist");
             newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy());
         } else {
-//            System.out.println(Skeleton.skeletonMap.get(address).getServer().getClass());
-//            System.out.println(c.getClass());
-
             Skeleton skeleton = Skeleton.skeletonMap.get(address);
             newStub = (T)Proxy.newProxyInstance(c.getClassLoader(), new Class[] {c}, new StubProxy(skeleton.getServer(), skeleton));
         }

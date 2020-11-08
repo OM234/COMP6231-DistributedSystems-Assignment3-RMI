@@ -1,14 +1,24 @@
 package rmi;
 
-import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
+
+/**
+ * InvocationHandler for stubs. Connects the stubs to their associated skeletons.
+ * Marshals arguments, unmarshals responses
+ */
 public class StubProxy implements InvocationHandler {
 
+    /**
+     * Object which calls the method
+     */
     Object target;
+    /**
+     * Skeleton which services the method call
+     */
     Skeleton skeleton;
 
     public StubProxy(){
@@ -24,6 +34,7 @@ public class StubProxy implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
+        //The invocation handler can deal with .equals(), .hashCode(), and .toString() by itself
         if(method.getName().equals("equals")) {
             return isEqual(args);
         }
@@ -37,20 +48,21 @@ public class StubProxy implements InvocationHandler {
             throw new RMIException("No skeleton or target");
         }
 
+        //Invoke the method. Pass along any exceptions
         try {
             return method.invoke(target, args);
         }
         catch (InvocationTargetException e) {
-
             throw e.getTargetException();
         }
-//        catch (Exception e) {
-//            e.printStackTrace();
-//            throw new RMIException("Method does not exist");
-//        }
-        //return null;
     }
 
+    /**
+     * Determines if 2 objects are the same skeleton
+     *
+     * @param args 1 argument, which is object to compare if equal
+     * @return true if both objects are the same skeleton
+     */
     private boolean isEqual(Object[] args) {
         //comparing an initialized object to null, so return false
         if(args[0] == null) {
@@ -64,12 +76,4 @@ public class StubProxy implements InvocationHandler {
             return false;
         }
     }
-
-//    public static <T> T withProxy(T target, Class<T> intf) {
-//
-//        return (T) Proxy.newProxyInstance(
-//                intf.getClassLoader(),
-//                new Class<?>[]{intf},
-//                new StubProxy(target, 10));
-//    }
 }

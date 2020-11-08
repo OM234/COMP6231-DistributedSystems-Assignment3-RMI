@@ -20,12 +20,26 @@ import naming.*;
  */
 public class StorageServer implements Storage, Command
 {
+    /**
+     * Represents the location on the local machine of the root directory
+     */
     private File root;
+    /**
+     * Storage Skeleton of this server
+     */
     private Skeleton<Storage> storageSkeleton;
+    /**
+     * Command Skeleton of this server
+     */
     private Skeleton<Command> commandSkeleton;
+    /**
+     * Storage Stub of this server
+     */
     private Storage storageStub;
+    /**
+     * Command Stub of this server
+     */
     private Command commandStub;
-
 
     /** Creates a storage server, given a directory on the local filesystem.
 
@@ -104,7 +118,6 @@ public class StorageServer implements Storage, Command
      * @throws RMIException
      * @throws FileNotFoundException
      */
-
     private void deleteRepeatFileAndEmptyFolders(Registration naming_server)
             throws RMIException, FileNotFoundException {
 
@@ -114,6 +127,11 @@ public class StorageServer implements Storage, Command
         deleteEmptyFolders(root);
     }
 
+    /**
+     * Deletes the empty folders in the root directory
+     *
+     * @param root folder in which to recursively delete the empty folders
+     */
     private void deleteEmptyFolders(File root) {
 
         if(root.isDirectory()) {
@@ -123,7 +141,6 @@ public class StorageServer implements Storage, Command
             }
         }
     }
-
 
     /** Stops the storage server.
 
@@ -149,7 +166,6 @@ public class StorageServer implements Storage, Command
     @Override
     public synchronized long size(Path file) throws FileNotFoundException
     {
-        //System.out.println(this.root + file.toString());
         File target = new File(this.root + file.toString());
 
         if(!target.exists() || target.isDirectory()) {
@@ -163,8 +179,9 @@ public class StorageServer implements Storage, Command
     public synchronized byte[] read(Path file, long offset, int length)
         throws FileNotFoundException, IOException
     {
+        //used to read file
         FileInputStream fis;
-        ObjectInputStream ois;
+        //to store the read bytes
         byte[] buffer;
         File target = new File(this.root + file.toString());
 
@@ -180,7 +197,6 @@ public class StorageServer implements Storage, Command
         }
 
         fis = new FileInputStream(target);
-        //ois = new ObjectInputStream(fis);
         buffer = new byte[(int)target.length()];
 
         fis.read(buffer, (int)offset, length);
@@ -192,7 +208,6 @@ public class StorageServer implements Storage, Command
     public synchronized void write(Path file, long offset, byte[] data)
         throws FileNotFoundException, IOException
     {
-        ObjectOutputStream oos;
         FileOutputStream fos;
         File target = new File(this.root + file.toString());
 
@@ -203,27 +218,30 @@ public class StorageServer implements Storage, Command
             throw new IndexOutOfBoundsException();
         }
 
-        //oos = new ObjectOutputStream(fos);
         if(offset == 0) {
             fos = new FileOutputStream(target);
             fos.write(data, 0, data.length);
             fos.close();
         } else {
-            offsetWrite(file, target, offset, data);
+            offsetWrite(target, offset, data);
         }
-        //oos.close();
     }
 
-    private void offsetWrite(Path file, File target, long offset, byte[] data) throws IOException {
+    /**
+     * Writes to a target some data, given an offset
+     *
+     * @param target to write to
+     * @param offset to start write
+     * @param data to write
+     * @throws IOException if error during write
+     */
+    private void offsetWrite(File target, long offset, byte[] data) throws IOException {
 
         FileInputStream fis = new FileInputStream(target);
         FileOutputStream fos;
-        //ObjectInputStream ois = new ObjectInputStream(fis);
 
-        System.out.println(fis.available());
         int bytesToRead = Math.min(fis.available(), (int)offset);
         byte[] readData = new byte[(int)offset + data.length];
-        //byte[] newDataRead = new byte[(int)offset + data.length];
 
         fis.read(readData, 0, bytesToRead);
 
@@ -285,15 +303,19 @@ public class StorageServer implements Storage, Command
         if(!toDelete.exists()) {
             return false;
         }
-
         if(toDelete.isFile()) {
             return toDelete.delete();
         }
 
         recursiveFileDelete(toDelete);
-
         return true;
     }
+
+    /**
+     * Deletes a file or folder
+     *
+     * @param toDelete file/folder to delete
+     */
 
     public void recursiveFileDelete(File toDelete) {
 
@@ -306,7 +328,6 @@ public class StorageServer implements Storage, Command
             }
             file.delete();
         }
-
         toDelete.delete();
     }
 }
